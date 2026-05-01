@@ -207,3 +207,4 @@ MIT License — Free to use, modify, and distribute.
 ---
 
 Built with 💚 for Indian Farmers | AgriSmart 2024
+Updated project description
