@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Price Prediction — AgriSmart</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="/dashboard"><div class="logo-icon">🌾</div>AgriSmart</a>
+  <ul class="navbar-nav">
+    <li><a href="/land/">🗺️ Land</a></li>
+    <li><a href="/soil/">🧪 Soil</a></li>
+    <li><a href="/disease/">🔬 Disease</a></li>
+    <li><a href="/price/" class="active">📈 Prices</a></li>
+    <li><a href="/storage/">🏚️ Storage</a></li>
+    <li><a href="/auth/logout" class="btn-logout">Logout</a></li>
+  </ul>
+</nav>
+
+<div class="page-header">
+  <div class="container">
+    <h1>📈 Crop Price Prediction</h1>
+    <p>ML-powered market price forecasts to help you make better selling decisions</p>
+  </div>
+</div>
+
+<div class="page-wrapper">
+  <div class="grid-2" style="align-items:start">
+
+    <!-- Prediction Form -->
+    <div class="card">
+      <div class="card-header" style="background:linear-gradient(135deg,#5C3D2E,#8B5E3C)">
+        <span class="card-icon">💰</span>
+        <h3>Get Price Prediction</h3>
+      </div>
+      <div class="card-body">
+        <form id="price-form">
+          <div class="form-group">
+            <label for="crop_name">Crop Name</label>
+            <select id="crop_name" name="crop_name" class="form-control">
+              <option value="wheat">Wheat (गेहूं)</option>
+              <option value="rice">Rice (चावल)</option>
+              <option value="maize">Maize (मक्का)</option>
+              <option value="cotton">Cotton (कपास)</option>
+              <option value="sugarcane">Sugarcane (गन्ना)</option>
+              <option value="soybean">Soybean (सोयाबीन)</option>
+              <option value="groundnut">Groundnut (मूंगफली)</option>
+              <option value="potato">Potato (आलू)</option>
+              <option value="onion">Onion (प्याज)</option>
+              <option value="tomato">Tomato (टमाटर)</option>
+              <option value="mustard">Mustard (सरसों)</option>
+              <option value="barley">Barley (जौ)</option>
+              <option value="pulses">Pulses (दालें)</option>
+              <option value="jowar">Jowar (ज्वार)</option>
+              <option value="bajra">Bajra (बाजरा)</option>
+              <option value="turmeric">Turmeric (हल्दी)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="state">State</label>
+            <select id="state" name="state" class="form-control">
+              <option value="">— Select State —</option>
+              <option value="punjab">Punjab</option>
+              <option value="haryana">Haryana</option>
+              <option value="uttar pradesh">Uttar Pradesh</option>
+              <option value="madhya pradesh">Madhya Pradesh</option>
+              <option value="maharashtra">Maharashtra</option>
+              <option value="karnataka">Karnataka</option>
+              <option value="andhra pradesh">Andhra Pradesh</option>
+              <option value="rajasthan">Rajasthan</option>
+              <option value="gujarat">Gujarat</option>
+              <option value="west bengal">West Bengal</option>
+              <option value="bihar">Bihar</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="market">Market / Mandi</label>
+            <input type="text" id="market" name="market" class="form-control" placeholder="e.g. Amritsar Mandi">
+          </div>
+
+          <div class="form-group">
+            <label for="month">Month</label>
+            <select id="month" name="month" class="form-control">
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-full btn-lg" style="background:var(--soil);color:white">📈 Predict Price</button>
+        </form>
+
+        <div id="price-result" class="result-box hidden"></div>
+      </div>
+    </div>
+
+    <!-- Reference + History -->
+    <div style="display:flex;flex-direction:column;gap:1.5rem">
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">📊</span>
+          <h3>MSP Reference Prices 2024</h3>
+        </div>
+        <div class="card-body" style="padding:0;overflow:auto">
+          <table class="data-table" style="font-size:0.88rem">
+            <thead><tr><th>Crop</th><th>MSP (₹/quintal)</th><th>Season</th></tr></thead>
+            <tbody>
+              <tr><td>Wheat</td><td>₹2,275</td><td>Rabi</td></tr>
+              <tr><td>Paddy (Rice)</td><td>₹2,183</td><td>Kharif</td></tr>
+              <tr><td>Maize</td><td>₹2,090</td><td>Kharif</td></tr>
+              <tr><td>Cotton (Long)</td><td>₹7,020</td><td>Kharif</td></tr>
+              <tr><td>Soybean</td><td>₹4,600</td><td>Kharif</td></tr>
+              <tr><td>Groundnut</td><td>₹6,377</td><td>Kharif</td></tr>
+              <tr><td>Mustard</td><td>₹5,650</td><td>Rabi</td></tr>
+              <tr><td>Barley</td><td>₹1,735</td><td>Rabi</td></tr>
+            </tbody>
+          </table>
+          <div style="padding:.75rem 1rem;font-size:0.8rem;color:var(--text-light)">
+            * MSP = Minimum Support Price announced by Govt. of India
+          </div>
+        </div>
+      </div>
+
+      {% if history %}
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">📜</span>
+          <h3>Recent Predictions</h3>
+        </div>
+        <div class="card-body" style="padding:0;overflow:auto">
+          <table class="data-table" style="font-size:0.88rem">
+            <thead><tr><th>Crop</th><th>State</th><th>Predicted Price</th><th>Date</th></tr></thead>
+            <tbody>
+              {% for h in history %}
+              <tr>
+                <td>{{ h.crop_name }}</td>
+                <td>{{ h.state or '—' }}</td>
+                <td>₹{{ "%.0f"|format(h.predicted_price) }}/qtl</td>
+                <td>{{ h.date }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<footer><strong>AgriSmart</strong> &copy; 2024</footer>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

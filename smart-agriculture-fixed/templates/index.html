@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriSmart — Smart Agriculture Management System</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="/">
+    <div class="logo-icon">🌾</div>
+    AgriSmart
+  </a>
+  <ul class="navbar-nav">
+    <li><a href="/auth/login">Login</a></li>
+    <li><a href="/auth/register" class="btn btn-wheat btn-sm">Get Started</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>Smart Agriculture<br>Management System</h1>
+  <p>AI-powered tools for soil analysis, crop disease detection, price prediction, and land management — designed for Indian farmers.</p>
+  <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative">
+    <a href="/auth/register" class="btn btn-wheat btn-lg">🚀 Get Started Free</a>
+    <a href="/auth/login" class="btn btn-secondary btn-lg" style="background:rgba(255,255,255,0.15);color:white;border-color:rgba(255,255,255,0.4)">🔑 Sign In</a>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section style="padding:5rem 1.5rem;background:var(--cream)">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:3rem">
+      <h2 style="font-family:'Playfair Display',serif;font-size:2.2rem;color:var(--soil)">Everything a Farmer Needs</h2>
+      <p style="color:var(--text-mid);margin-top:.5rem;font-size:1.05rem">Six powerful modules, one unified platform</p>
+    </div>
+    <div class="grid-3">
+      <div class="feature-card">
+        <div class="icon">🗺️</div>
+        <h3>Land Record Management</h3>
+        <p>Track your land parcels, soil types, and crop history in one organized digital space.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🧪</div>
+        <h3>Soil Analysis</h3>
+        <p>Enter pH, moisture, and nutrient data to get instant soil quality reports and crop recommendations.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🔬</div>
+        <h3>Disease Detection</h3>
+        <p>Upload a photo of your crop to identify diseases with AI and get treatment solutions instantly.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📈</div>
+        <h3>Price Prediction</h3>
+        <p>Get ML-based market price forecasts for your crops to make better selling decisions.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🏚️</div>
+        <h3>Grain Storage Guidance</h3>
+        <p>Learn optimal storage conditions, methods, and best practices for each crop.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🌍</div>
+        <h3>Multi-language Support</h3>
+        <p>Available in Hindi, Punjabi, Marathi, Telugu and more for rural accessibility.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section style="background:linear-gradient(135deg,var(--leaf) 0%,#1B4332 100%);padding:4rem 1.5rem;color:white">
+  <div class="container">
+    <div class="grid-4" style="text-align:center">
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:700;color:var(--wheat-light)">6+</div>
+        <div style="color:rgba(255,255,255,0.8)">Smart Modules</div>
+      </div>
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:700;color:var(--wheat-light)">16</div>
+        <div style="color:rgba(255,255,255,0.8)">Crop Price Forecasts</div>
+      </div>
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:700;color:var(--wheat-light)">5</div>
+        <div style="color:rgba(255,255,255,0.8)">Languages Supported</div>
+      </div>
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:700;color:var(--wheat-light)">AI</div>
+        <div style="color:rgba(255,255,255,0.8)">Powered Analysis</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="padding:5rem 1.5rem;text-align:center;background:var(--mist)">
+  <h2 style="font-family:'Playfair Display',serif;font-size:2rem;color:var(--soil);margin-bottom:1rem">Start Managing Your Farm Smarter</h2>
+  <p style="color:var(--text-mid);margin-bottom:2rem;font-size:1.05rem">Join thousands of farmers using technology to improve their yields and income.</p>
+  <a href="/auth/register" class="btn btn-primary btn-lg">🌱 Create Free Account</a>
+</section>
+
+<footer>
+  <strong>AgriSmart</strong> — Smart Agriculture Management System &copy; 2024 &nbsp;|&nbsp; Built with 💚 for Indian Farmers
+</footer>
+
+</body>
+</html>

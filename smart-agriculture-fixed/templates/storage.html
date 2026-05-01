@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grain Storage — AgriSmart</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="/dashboard"><div class="logo-icon">🌾</div>AgriSmart</a>
+  <ul class="navbar-nav">
+    <li><a href="/land/">🗺️ Land</a></li>
+    <li><a href="/soil/">🧪 Soil</a></li>
+    <li><a href="/disease/">🔬 Disease</a></li>
+    <li><a href="/price/">📈 Prices</a></li>
+    <li><a href="/storage/" class="active">🏚️ Storage</a></li>
+    <li><a href="/auth/logout" class="btn-logout">Logout</a></li>
+  </ul>
+</nav>
+
+<div class="page-header">
+  <div class="container">
+    <h1>🏚️ Grain Storage Guidance</h1>
+    <p>Optimal storage methods, conditions, and best practices for each crop</p>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  <!-- Crop selector -->
+  <div class="card" style="margin-bottom:2rem">
+    <div class="card-body">
+      <div style="font-size:0.85rem;font-weight:600;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem">Select Crop</div>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+        <button class="btn btn-primary crop-btn" data-crop="wheat" onclick="loadStorageInfo('wheat')">🌾 Wheat</button>
+        <button class="btn btn-secondary crop-btn" data-crop="rice" onclick="loadStorageInfo('rice')">🍚 Rice</button>
+        <button class="btn btn-secondary crop-btn" data-crop="maize" onclick="loadStorageInfo('maize')">🌽 Maize</button>
+        <button class="btn btn-secondary crop-btn" data-crop="pulses" onclick="loadStorageInfo('pulses')">🫘 Pulses</button>
+        <button class="btn btn-secondary crop-btn" data-crop="vegetables" onclick="loadStorageInfo('vegetables')">🥦 Vegetables</button>
+        <button class="btn btn-secondary crop-btn" data-crop="fruits" onclick="loadStorageInfo('fruits')">🍎 Fruits</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="align-items:start">
+
+    <!-- Storage details (dynamic) -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">📦</span>
+        <h3>Storage Guidelines</h3>
+      </div>
+      <div class="card-body">
+        <div id="storage-details"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- General Tips -->
+    <div style="display:flex;flex-direction:column;gap:1.5rem">
+
+      <div class="card">
+        <div class="card-header" style="background:linear-gradient(135deg,#D4A853,#c49340)">
+          <span class="card-icon">⚠️</span>
+          <h3>Storage Enemies</h3>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:1rem">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="font-size:1.5rem">🌡️</span>
+              <div><strong>Excess Heat</strong><br><span style="font-size:0.88rem;color:var(--text-mid)">Speeds up respiration and accelerates spoilage. Keep below 25°C for most grains.</span></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="font-size:1.5rem">💧</span>
+              <div><strong>Moisture</strong><br><span style="font-size:0.88rem;color:var(--text-mid)">Primary cause of fungal growth and mycotoxins. Maintain grain moisture below 12-14%.</span></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="font-size:1.5rem">🐛</span>
+              <div><strong>Insects & Pests</strong><br><span style="font-size:0.88rem;color:var(--text-mid)">Weevils, beetles and rodents cause massive losses. Use approved pesticides and sealed storage.</span></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="font-size:1.5rem">🍄</span>
+              <div><strong>Mold & Fungi</strong><br><span style="font-size:0.88rem;color:var(--text-mid)">Grows in damp conditions. Causes aflatoxin contamination which is dangerous to health.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">✅</span>
+          <h3>Universal Best Practices</h3>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:.6rem;font-size:0.9rem;color:var(--text-mid)">
+            <div>✓ Always clean and dry produce before storage</div>
+            <div>✓ Inspect storage facilities before use — repair cracks, holes</div>
+            <div>✓ Use raised wooden platforms, never store directly on floor</div>
+            <div>✓ Label bags/containers with crop name, date, and quantity</div>
+            <div>✓ Follow First-In-First-Out (FIFO) principle</div>
+            <div>✓ Keep storage area clean and free of debris</div>
+            <div>✓ Regularly monitor for temperature, moisture, and pests</div>
+            <div>✓ Use hermetic bags or metal silos for long-term storage</div>
+            <div>✓ Maintain records of storage date and expected quality life</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer><strong>AgriSmart</strong> &copy; 2024</footer>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+  // Highlight active crop button
+  function loadStorageInfo(crop) {
+    document.querySelectorAll('.crop-btn').forEach(b => {
+      b.classList.toggle('btn-primary', b.dataset.crop === crop);
+      b.classList.toggle('btn-secondary', b.dataset.crop !== crop);
+    });
+    const box = document.getElementById('storage-details');
+    box.innerHTML = '<div class="spinner"></div>';
+    fetch(`/storage/info?crop=${crop}`)
+      .then(r => r.json())
+      .then(data => {
+        box.innerHTML = `
+          <div class="result-title">🌾 ${data.name} — Storage Guide</div>
+          <div class="grid-2" style="margin-bottom:1rem">
+            <div>
+              <div style="font-size:0.8rem;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px">Temperature</div>
+              <div style="font-size:1.1rem;font-weight:600">🌡️ ${data.temperature}</div>
+            </div>
+            <div>
+              <div style="font-size:0.8rem;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px">Humidity</div>
+              <div style="font-size:1.1rem;font-weight:600">💧 ${data.humidity}</div>
+            </div>
+            <div>
+              <div style="font-size:0.8rem;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px">Storage Duration</div>
+              <div style="font-size:1.1rem;font-weight:600">📅 ${data.duration}</div>
+            </div>
+          </div>
+          <div style="margin-bottom:1rem">
+            <div style="font-size:0.85rem;font-weight:600;color:var(--text-mid);margin-bottom:.4rem">📦 Recommended Method</div>
+            <div style="font-size:0.92rem;color:var(--text-mid);background:var(--mist);padding:.75rem;border-radius:8px">${data.method}</div>
+          </div>
+          <div style="background:var(--sky);padding:1rem;border-radius:8px;border-left:4px solid var(--leaf-bright)">
+            <div style="font-weight:700;color:var(--leaf);margin-bottom:.6rem">💡 Best Practices</div>
+            ${data.tips.map(t => `<div style="font-size:0.88rem;color:var(--text-mid);margin-bottom:.3rem">✓ ${t}</div>`).join('')}
+          </div>
+        `;
+      })
+      .catch(() => { box.innerHTML = '<div class="alert alert-error">Failed to load storage info</div>'; });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => loadStorageInfo('wheat'));
+</script>
+</body>
+</html>

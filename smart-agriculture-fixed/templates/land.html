@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Land Records — AgriSmart</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="/dashboard"><div class="logo-icon">🌾</div>AgriSmart</a>
+  <ul class="navbar-nav">
+    <li><a href="/land/" class="active">🗺️ Land</a></li>
+    <li><a href="/soil/">🧪 Soil</a></li>
+    <li><a href="/disease/">🔬 Disease</a></li>
+    <li><a href="/price/">📈 Prices</a></li>
+    <li><a href="/storage/">🏚️ Storage</a></li>
+    <li><a href="/auth/logout" class="btn-logout">Logout</a></li>
+  </ul>
+</nav>
+
+<div class="page-header">
+  <div class="container">
+    <h1>🗺️ Land Records</h1>
+    <p>Track and manage all your land parcels in one place</p>
+  </div>
+</div>
+
+<div class="page-wrapper">
+  <div class="grid-2" style="align-items:start">
+
+    <!-- Add Form -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">➕</span>
+        <h3>Add Land Record</h3>
+      </div>
+      <div class="card-body">
+        <form id="land-form">
+          <div class="form-group">
+            <label for="location">Location / Village</label>
+            <input type="text" id="location" name="location" class="form-control" placeholder="e.g. Ludhiana, Punjab" required>
+          </div>
+          <div class="form-group">
+            <label for="area">Area (Acres)</label>
+            <input type="number" id="area" name="area" class="form-control" placeholder="e.g. 5.5" step="0.1" min="0" required>
+          </div>
+          <div class="form-group">
+            <label for="soil_type">Soil Type</label>
+            <select id="soil_type" name="soil_type" class="form-control">
+              <option value="">— Select soil type —</option>
+              <option>Alluvial Soil</option>
+              <option>Black Cotton Soil</option>
+              <option>Red Soil</option>
+              <option>Laterite Soil</option>
+              <option>Desert Soil</option>
+              <option>Mountain Soil</option>
+              <option>Loamy Soil</option>
+              <option>Sandy Soil</option>
+              <option>Clay Soil</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="crop_grown">Current Crop</label>
+            <input type="text" id="crop_grown" name="crop_grown" class="form-control" placeholder="e.g. Wheat, Rice">
+          </div>
+          <div class="form-group">
+            <label for="notes">Notes</label>
+            <textarea id="notes" name="notes" class="form-control" placeholder="Any additional details..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full">➕ Add Record</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Records Table -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">📋</span>
+        <h3>My Land Records</h3>
+      </div>
+      <div class="card-body" style="padding:0;overflow:auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Location</th>
+              <th>Area</th>
+              <th>Soil Type</th>
+              <th>Crop</th>
+              <th>Added</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="land-table-body">
+            {% if records %}
+              {% for r in records %}
+              <tr>
+                <td>{{ r.location }}</td>
+                <td>{{ r.area }} acres</td>
+                <td>{{ r.soil_type or '—' }}</td>
+                <td>{{ r.crop_grown or '—' }}</td>
+                <td>{{ r.created_at }}</td>
+                <td>
+                  <button class="btn btn-danger btn-sm" onclick="deleteLand({{ r.land_id }})">Delete</button>
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:2rem">No land records yet. Add one!</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer><strong>AgriSmart</strong> &copy; 2024</footer>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
