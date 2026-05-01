@@ -21,7 +21,8 @@ app.register_blueprint(price_bp, url_prefix='/price')
 app.register_blueprint(storage_bp, url_prefix='/storage')
 
 # Ensure upload folder exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+upload_folder = app.config.get('UPLOAD_FOLDER', 'uploads')
+os.makedirs(upload_folder, exist_ok=True)
 
 @app.route('/')
 def index():
@@ -37,4 +38,5 @@ def dashboard():
 init_db(app)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
