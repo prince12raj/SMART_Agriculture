@@ -51,13 +51,18 @@ def login():
     session['user_id'] = user.user_id
     session['user_name'] = user.name
     session['language'] = user.language
-    return redirect(url_for('dashboard'))
+
+    # FIX: use hardcoded path instead of url_for('dashboard')
+    # url_for('dashboard') fails if app.py was modified and the function
+    # was renamed, moved to a blueprint, or the route changed.
+    return redirect('/dashboard')
 
 
 @auth_bp.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('index'))
+    # FIX: same reason — use hardcoded path instead of url_for('index')
+    return redirect('/')
 
 
 @auth_bp.route('/profile', methods=['GET', 'PUT'])
