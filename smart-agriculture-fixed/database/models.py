@@ -110,3 +110,84 @@ class PricePrediction(db.Model):
             'unit': self.unit,
             'date': self.date.strftime('%Y-%m-%d')
         }
+    
+    # ADD at the bottom of database/models.py — after PricePrediction class
+
+class LandRegistry(db.Model):
+    """Public land registry — 1000 seeded records, searchable by all users"""
+    __tablename__ = 'land_registry'
+    id            = db.Column(db.Integer, primary_key=True)
+    khata_no      = db.Column(db.String(20), index=True)
+    khesra_no     = db.Column(db.String(20), index=True)
+    survey_no     = db.Column(db.String(20))
+    owner_name    = db.Column(db.String(100), index=True)
+    state         = db.Column(db.String(100), index=True)
+    city          = db.Column(db.String(100), index=True)
+    area          = db.Column(db.Float)
+    soil_type     = db.Column(db.String(100))
+    land_type     = db.Column(db.String(50))
+    crop_history  = db.Column(db.String(200))
+    water_source  = db.Column(db.String(100))
+    land_status   = db.Column(db.String(50))
+    registered_year = db.Column(db.Integer)
+    ph_value      = db.Column(db.Float)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'khata_no': self.khata_no,
+            'khesra_no': self.khesra_no,
+            'survey_no': self.survey_no,
+            'owner_name': self.owner_name,
+            'state': self.state,
+            'city': self.city,
+            'area': self.area,
+            'soil_type': self.soil_type,
+            'land_type': self.land_type,
+            'crop_history': self.crop_history,
+            'water_source': self.water_source,
+            'land_status': self.land_status,
+            'registered_year': self.registered_year,
+            'ph_value': self.ph_value,
+        }
+
+
+class LandAnalysis(db.Model):
+    """Stores AI land image analysis results per user"""
+    __tablename__ = 'land_analysis'
+    analysis_id   = db.Column(db.Integer, primary_key=True)
+    user_id       = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    image_path    = db.Column(db.String(300))
+    ph            = db.Column(db.Float)
+    nitrogen      = db.Column(db.Float)
+    phosphorus    = db.Column(db.Float)
+    potassium     = db.Column(db.Float)
+    organic_matter = db.Column(db.Float)
+    moisture      = db.Column(db.Float)
+    health_score  = db.Column(db.Float)
+    quality       = db.Column(db.String(50))
+    texture       = db.Column(db.String(50))
+    suitable_crops = db.Column(db.Text)
+    fertilizer    = db.Column(db.Text)
+    irrigation    = db.Column(db.Text)
+    summary       = db.Column(db.Text)
+    created_at    = db.Column(db.DateTime, default=__import__('datetime').datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'analysis_id': self.analysis_id,
+            'ph': self.ph,
+            'nitrogen': self.nitrogen,
+            'phosphorus': self.phosphorus,
+            'potassium': self.potassium,
+            'organic_matter': self.organic_matter,
+            'moisture': self.moisture,
+            'health_score': self.health_score,
+            'quality': self.quality,
+            'texture': self.texture,
+            'suitable_crops': self.suitable_crops,
+            'fertilizer': self.fertilizer,
+            'irrigation': self.irrigation,
+            'summary': self.summary,
+            'created_at': self.created_at.strftime('%Y-%m-%d'),
+        }
