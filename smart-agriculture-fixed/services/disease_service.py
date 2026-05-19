@@ -1,5 +1,10 @@
 import os
-import numpy as np
+# NEW - safe import
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
 
 # Disease database with solutions
 DISEASE_DATABASE = {
