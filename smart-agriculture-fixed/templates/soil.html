@@ -5,6 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Soil Analysis — AgriSmart</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    /* ── Tab bar ── */
+    .soil-tabs { display:flex; gap:.5rem; margin-bottom:1.5rem; border-bottom:2px solid var(--border); padding-bottom:.5rem; }
+    .soil-tab  { padding:.55rem 1.25rem; border-radius:8px 8px 0 0; border:none; background:none;
+                 cursor:pointer; font-weight:600; font-size:.95rem; color:var(--text-mid);
+                 transition:all .2s; }
+    .soil-tab.active { background:var(--leaf); color:#fff; }
+    .soil-tab:hover:not(.active) { background:var(--bg-card); color:var(--leaf); }
+
+    /* ── Image upload zone ── */
+    .img-upload-zone {
+      border:2.5px dashed var(--leaf); border-radius:16px; padding:2.5rem 2rem;
+      text-align:center; cursor:pointer; transition:all .25s; background:var(--bg-page);
+      position:relative; min-height:180px; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:.5rem;
+    }
+    .img-upload-zone:hover, .img-upload-zone.drag-over {
+      background:rgba(82,160,80,.07); border-color:var(--leaf-dark);
+    }
+    .img-upload-zone img#img-preview {
+      max-width:100%; max-height:240px; border-radius:10px;
+      object-fit:contain; display:none;
+    }
+    .upload-hint { font-size:.85rem; color:var(--text-light); margin-top:.35rem; }
+
+    /* ── AI result card ── */
+    .ai-result { animation:fadeIn .4s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+    .score-ring {
+      width:90px; height:90px; border-radius:50%;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      font-size:1.5rem; font-weight:800; border:5px solid;
+      flex-shrink:0;
+    }
+    .score-ring.excellent { border-color:#22c55e; color:#22c55e; }
+    .score-ring.good      { border-color:#84cc16; color:#84cc16; }
+    .score-ring.average   { border-color:#f59e0b; color:#f59e0b; }
+    .score-ring.poor      { border-color:#ef4444; color:#ef4444; }
+
+    .crop-pill {
+      display:inline-block; padding:.28rem .75rem; margin:.2rem;
+      background:rgba(82,160,80,.12); border:1px solid rgba(82,160,80,.3);
+      border-radius:20px; font-size:.82rem; color:var(--leaf-dark); font-weight:500;
+    }
+    .crop-pill.bad { background:rgba(239,68,68,.1); border-color:rgba(239,68,68,.3); color:#b91c1c; }
+
+    .info-row { display:flex; justify-content:space-between; padding:.45rem 0;
+                border-bottom:1px solid var(--border); font-size:.9rem; }
+    .info-row:last-child { border-bottom:none; }
+    .info-row .label { color:var(--text-mid); }
+    .info-row .val   { font-weight:600; }
+
+    .npk-bar-wrap { display:flex; align-items:center; gap:.75rem; margin:.4rem 0; font-size:.88rem; }
+    .npk-label { width:110px; color:var(--text-mid); flex-shrink:0; }
+    .npk-bar   { flex:1; height:10px; background:var(--border); border-radius:5px; overflow:hidden; }
+    .npk-fill  { height:100%; border-radius:5px; transition:width .8s ease; }
+    .npk-fill.low    { background:#ef4444; }
+    .npk-fill.medium { background:#f59e0b; }
+    .npk-fill.high   { background:#22c55e; }
+
+    .season-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:.75rem; margin-top:.75rem; }
+    .season-card { background:var(--bg-page); border:1px solid var(--border); border-radius:10px;
+                   padding:.75rem; font-size:.85rem; }
+    .season-card h5 { font-size:.8rem; color:var(--leaf); margin:0 0 .4rem; font-weight:700; }
+
+    /* ── Loading spinner ── */
+    .analyzing-overlay {
+      text-align:center; padding:2.5rem 1rem; display:none; flex-direction:column;
+      align-items:center; gap:1rem;
+    }
+    .spinner {
+      width:50px; height:50px; border:5px solid var(--border);
+      border-top-color:var(--leaf); border-radius:50%;
+      animation:spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
 </head>
 <body>
 
@@ -24,123 +102,418 @@
 <div class="page-header">
   <div class="container">
     <h1>🧪 Soil Analysis</h1>
-    <p>Enter your soil parameters to get quality report and crop recommendations</p>
+    <p>Analyze soil by parameters or upload a photo for AI-powered diagnosis</p>
   </div>
 </div>
 
 <div class="page-wrapper">
-  <div class="grid-2" style="align-items:start">
 
-    <!-- Input Form -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-icon">🔬</span>
-        <h3>Enter Soil Parameters</h3>
-      </div>
-      <div class="card-body">
-        <form id="soil-form">
+  <!-- Tab Bar -->
+  <div class="soil-tabs">
+    <button class="soil-tab active" onclick="switchTab('manual', this)">📊 Manual Parameters</button>
+    <button class="soil-tab" onclick="switchTab('image', this)">📷 Image AI Analysis</button>
+  </div>
 
-          <div class="form-group">
-            <label for="ph">Soil pH Level</label>
-            <div class="range-group">
-              <input type="range" id="ph" name="ph" min="0" max="14" step="0.1" value="7.0">
-              <span class="range-value" data-range="ph">7.0</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--text-light);margin-top:4px">
-              <span>Acidic (0)</span><span>Neutral (7)</span><span>Alkaline (14)</span>
-            </div>
-          </div>
+  <!-- ═══════════ TAB 1: MANUAL ═══════════ -->
+  <div id="tab-manual">
+    <div class="grid-2" style="align-items:start">
 
-          <div class="form-group">
-            <label for="moisture">Moisture Content (%)</label>
-            <div class="range-group">
-              <input type="range" id="moisture" name="moisture" min="0" max="100" value="50">
-              <span class="range-value" data-range="moisture">50</span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="nitrogen">Nitrogen (N) mg/kg</label>
-            <div class="range-group">
-              <input type="range" id="nitrogen" name="nitrogen" min="0" max="140" value="60">
-              <span class="range-value" data-range="nitrogen">60</span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="phosphorus">Phosphorus (P) mg/kg</label>
-            <div class="range-group">
-              <input type="range" id="phosphorus" name="phosphorus" min="0" max="145" value="50">
-              <span class="range-value" data-range="phosphorus">50</span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="potassium">Potassium (K) mg/kg</label>
-            <div class="range-group">
-              <input type="range" id="potassium" name="potassium" min="0" max="205" value="80">
-              <span class="range-value" data-range="potassium">80</span>
-            </div>
-          </div>
-
-          <button type="submit" class="btn btn-primary btn-full btn-lg">🔍 Analyze Soil</button>
-        </form>
-
-        <!-- Result box -->
-        <div id="soil-result" class="result-box hidden"></div>
-      </div>
-    </div>
-
-    <!-- History + Guide -->
-    <div style="display:flex;flex-direction:column;gap:1.5rem">
-      <div class="card">
-        <div class="card-header" style="background:linear-gradient(135deg,#D4A853,#c49340)">
-          <span class="card-icon">📖</span>
-          <h3>pH Reference Guide</h3>
-        </div>
-        <div class="card-body">
-          <table class="data-table" style="font-size:0.88rem">
-            <thead><tr><th>pH Range</th><th>Category</th><th>Suitable For</th></tr></thead>
-            <tbody>
-              <tr><td>Below 5.5</td><td><span class="badge badge-severe">Acidic</span></td><td>Tea, Coffee, Potato</td></tr>
-              <tr><td>5.5 – 6.5</td><td><span class="badge badge-moderate">Slightly Acidic</span></td><td>Rice, Maize, Wheat</td></tr>
-              <tr><td>6.5 – 7.5</td><td><span class="badge badge-none">Neutral</span></td><td>Most Crops</td></tr>
-              <tr><td>7.5 – 8.5</td><td><span class="badge badge-moderate">Slightly Alkaline</span></td><td>Cotton, Barley</td></tr>
-              <tr><td>Above 8.5</td><td><span class="badge badge-severe">Alkaline</span></td><td>Asparagus, Celery</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {% if history %}
+      <!-- Input Form -->
       <div class="card">
         <div class="card-header">
-          <span class="card-icon">📜</span>
-          <h3>Recent Analyses</h3>
+          <span class="card-icon">🔬</span>
+          <h3>Enter Soil Parameters</h3>
         </div>
-        <div class="card-body" style="padding:0;overflow:auto">
-          <table class="data-table" style="font-size:0.88rem">
-            <thead><tr><th>Date</th><th>pH</th><th>Result</th><th>Crops</th></tr></thead>
-            <tbody>
-              {% for h in history %}
-              <tr>
-                <td>{{ h.created_at }}</td>
-                <td>{{ h.ph }}</td>
-                <td>{{ h.result }}</td>
-                <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ h.recommended_crops }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        <div class="card-body">
+          <form id="soil-form">
+
+            <div class="form-group">
+              <label for="ph">Soil pH Level</label>
+              <div class="range-group">
+                <input type="range" id="ph" name="ph" min="0" max="14" step="0.1" value="7.0">
+                <span class="range-value" data-range="ph">7.0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--text-light);margin-top:4px">
+                <span>Acidic (0)</span><span>Neutral (7)</span><span>Alkaline (14)</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="moisture">Moisture Content (%)</label>
+              <div class="range-group">
+                <input type="range" id="moisture" name="moisture" min="0" max="100" value="50">
+                <span class="range-value" data-range="moisture">50</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="nitrogen">Nitrogen (N) mg/kg</label>
+              <div class="range-group">
+                <input type="range" id="nitrogen" name="nitrogen" min="0" max="140" value="60">
+                <span class="range-value" data-range="nitrogen">60</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="phosphorus">Phosphorus (P) mg/kg</label>
+              <div class="range-group">
+                <input type="range" id="phosphorus" name="phosphorus" min="0" max="145" value="50">
+                <span class="range-value" data-range="phosphorus">50</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="potassium">Potassium (K) mg/kg</label>
+              <div class="range-group">
+                <input type="range" id="potassium" name="potassium" min="0" max="205" value="80">
+                <span class="range-value" data-range="potassium">80</span>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full btn-lg">🔍 Analyze Soil</button>
+          </form>
+
+          <div id="soil-result" class="result-box hidden"></div>
         </div>
       </div>
-      {% endif %}
-    </div>
 
-  </div>
+      <!-- pH Guide + History -->
+      <div style="display:flex;flex-direction:column;gap:1.5rem">
+        <div class="card">
+          <div class="card-header" style="background:linear-gradient(135deg,#D4A853,#c49340)">
+            <span class="card-icon">📖</span>
+            <h3>pH Reference Guide</h3>
+          </div>
+          <div class="card-body">
+            <table class="data-table" style="font-size:0.88rem">
+              <thead><tr><th>pH Range</th><th>Category</th><th>Suitable For</th></tr></thead>
+              <tbody>
+                <tr><td>Below 5.5</td><td><span class="badge badge-severe">Acidic</span></td><td>Tea, Coffee, Potato</td></tr>
+                <tr><td>5.5 – 6.5</td><td><span class="badge badge-moderate">Slightly Acidic</span></td><td>Rice, Maize, Wheat</td></tr>
+                <tr><td>6.5 – 7.5</td><td><span class="badge badge-none">Neutral</span></td><td>Most Crops</td></tr>
+                <tr><td>7.5 – 8.5</td><td><span class="badge badge-moderate">Slightly Alkaline</span></td><td>Cotton, Barley</td></tr>
+                <tr><td>Above 8.5</td><td><span class="badge badge-severe">Alkaline</span></td><td>Asparagus, Celery</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {% if history %}
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">📜</span>
+            <h3>Recent Analyses</h3>
+          </div>
+          <div class="card-body" style="padding:0;overflow:auto">
+            <table class="data-table" style="font-size:0.88rem">
+              <thead><tr><th>Date</th><th>pH</th><th>Result</th><th>Crops</th></tr></thead>
+              <tbody>
+                {% for h in history %}
+                <tr>
+                  <td>{{ h.created_at }}</td>
+                  <td>{{ h.ph }}</td>
+                  <td>{{ h.result }}</td>
+                  <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ h.recommended_crops }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div><!-- /tab-manual -->
+
+
+  <!-- ═══════════ TAB 2: IMAGE AI ═══════════ -->
+  <div id="tab-image" style="display:none">
+    <div class="grid-2" style="align-items:start">
+
+      <!-- Upload Card -->
+      <div class="card">
+        <div class="card-header" style="background:linear-gradient(135deg,#2563eb,#1d4ed8)">
+          <span class="card-icon">🤖</span>
+          <h3>AI Image Analysis</h3>
+        </div>
+        <div class="card-body">
+          <p style="color:var(--text-mid);font-size:.9rem;margin-bottom:1.2rem">
+            Upload a clear photo of your soil or land. Our AI will analyze color, texture, and
+            structure to provide soil type, quality score, and personalized crop recommendations.
+          </p>
+
+          <!-- Drop zone -->
+          <div class="img-upload-zone" id="drop-zone"
+               onclick="document.getElementById('soil-img-input').click()"
+               ondragover="handleDragOver(event)"
+               ondragleave="handleDragLeave(event)"
+               ondrop="handleDrop(event)">
+            <div id="upload-placeholder">
+              <div style="font-size:3rem">🌱</div>
+              <div style="font-weight:700;color:var(--leaf);font-size:1rem">Click or drag to upload soil photo</div>
+              <div class="upload-hint">JPG · PNG · WebP · Max 16 MB</div>
+            </div>
+            <img id="img-preview" src="" alt="Soil preview">
+          </div>
+
+          <input type="file" id="soil-img-input" accept=".jpg,.jpeg,.png,.webp"
+                 style="display:none" onchange="handleFileSelect(this)">
+
+          <button id="analyze-img-btn" class="btn btn-primary btn-full btn-lg"
+                  style="margin-top:1rem" disabled onclick="runImageAnalysis()">
+            🤖 Analyze with AI
+          </button>
+
+          <div id="img-error" class="alert alert-error" style="display:none;margin-top:.75rem"></div>
+
+          <!-- Tips -->
+          <div style="margin-top:1.5rem;padding:1rem;background:rgba(82,160,80,.06);border-radius:10px;border:1px solid rgba(82,160,80,.2)">
+            <div style="font-weight:600;color:var(--leaf);margin-bottom:.5rem;font-size:.9rem">📸 Tips for Best Results</div>
+            <ul style="margin:0;padding-left:1.2rem;color:var(--text-mid);font-size:.85rem;line-height:1.8">
+              <li>Take photo in natural daylight</li>
+              <li>Include a handful of freshly dug soil</li>
+              <li>Avoid excessive shadow or glare</li>
+              <li>Show the soil texture clearly (dry or moist)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result area -->
+      <div id="img-result-area">
+        <!-- Analyzing spinner -->
+        <div class="card analyzing-overlay" id="analyzing-spinner">
+          <div class="spinner"></div>
+          <div style="font-weight:600;color:var(--leaf)">Analyzing your soil…</div>
+          <div style="color:var(--text-light);font-size:.88rem">AI is examining texture, color &amp; structure</div>
+        </div>
+
+        <!-- Empty state -->
+        <div class="card" id="img-empty-state" style="text-align:center;padding:3rem 2rem">
+          <div style="font-size:3.5rem">🔬</div>
+          <h4 style="margin:.75rem 0 .5rem">No Analysis Yet</h4>
+          <p style="color:var(--text-light);font-size:.9rem">Upload a soil photo and click Analyze to get your full soil health report.</p>
+        </div>
+
+        <!-- Populated with JS -->
+        <div id="img-result-card" style="display:none"></div>
+      </div>
+
+    </div>
+  </div><!-- /tab-image -->
+
 </div>
 
-<footer><strong>AgriSmart</strong> &copy; 2024</footer>
+<footer><strong>AgriSmart</strong> &copy; 2025</footer>
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+/* ── Tab switching ── */
+function switchTab(tab, btn) {
+  document.getElementById('tab-manual').style.display = tab === 'manual' ? '' : 'none';
+  document.getElementById('tab-image').style.display  = tab === 'image'  ? '' : 'none';
+  document.querySelectorAll('.soil-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ── Drag-and-drop ── */
+function handleDragOver(e)  { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
+function handleDragLeave(e) { document.getElementById('drop-zone').classList.remove('drag-over'); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) setImageFile(file);
+}
+function handleFileSelect(input) {
+  if (input.files[0]) setImageFile(input.files[0]);
+}
+
+let selectedFile = null;
+function setImageFile(file) {
+  const allowed = ['image/jpeg','image/png','image/webp','image/gif'];
+  if (!allowed.includes(file.type)) {
+    showImgError('Please upload a JPG, PNG, or WebP image.');
+    return;
+  }
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('img-preview');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    document.getElementById('upload-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+  document.getElementById('analyze-img-btn').disabled = false;
+  hideImgError();
+}
+
+/* ── Run AI Analysis ── */
+async function runImageAnalysis() {
+  if (!selectedFile) return;
+
+  // Show spinner, hide everything else
+  document.getElementById('img-empty-state').style.display = 'none';
+  document.getElementById('img-result-card').style.display = 'none';
+  const spinner = document.getElementById('analyzing-spinner');
+  spinner.style.display = 'flex';
+  document.getElementById('analyze-img-btn').disabled = true;
+  hideImgError();
+
+  const formData = new FormData();
+  formData.append('image', selectedFile);
+
+  try {
+    const resp = await fetch('/soil/analyze-image', { method:'POST', body: formData });
+    const data = await resp.json();
+    spinner.style.display = 'none';
+
+    if (data.error && !data.success) {
+      showImgError(data.error);
+      document.getElementById('img-empty-state').style.display = '';
+    } else {
+      renderAiResult(data);
+    }
+  } catch(err) {
+    spinner.style.display = 'none';
+    showImgError('Network error. Please try again.');
+    document.getElementById('img-empty-state').style.display = '';
+  }
+  document.getElementById('analyze-img-btn').disabled = false;
+}
+
+/* ── Render AI result ── */
+function renderAiResult(d) {
+  const qualityClass = {
+    'Excellent':'excellent','Good':'good','Average':'average','Poor':'poor'
+  }[d.quality] || 'average';
+
+  const npkMap = {'Low':25,'Medium':60,'High':90};
+  const npkColor = {'Low':'low','Medium':'medium','High':'high'};
+
+  const cropPills = (arr, bad=false) => (arr||[])
+    .map(c => `<span class="crop-pill${bad?' bad':''}">${c}</span>`).join('');
+
+  const listItems = arr => (arr||[]).map(i => `<li>${i}</li>`).join('');
+
+  const seasonHtml = Object.entries(d.season_recommendations||{})
+    .map(([s,crops]) => `
+      <div class="season-card">
+        <h5>${s}</h5>
+        ${(crops||[]).map(c=>`<span class="crop-pill" style="font-size:.75rem">${c}</span>`).join('')}
+      </div>`).join('');
+
+  const html = `
+  <div class="card ai-result">
+    <div class="card-header" style="background:linear-gradient(135deg,#166534,#14532d)">
+      <span class="card-icon">📊</span>
+      <h3>Soil Health Report</h3>
+    </div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:1.5rem">
+
+      <!-- Score + Summary -->
+      <div style="display:flex;gap:1.25rem;align-items:center">
+        <div class="score-ring ${qualityClass}">
+          <div>${d.health_score||'—'}</div>
+          <div style="font-size:.6rem;font-weight:600;margin-top:2px">/100</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:1.15rem;font-weight:700;color:var(--text)">${d.quality || 'Unknown'} Soil</div>
+          <div style="color:var(--text-mid);font-size:.88rem;margin-top:.3rem;line-height:1.6">${d.summary||''}</div>
+        </div>
+      </div>
+
+      <!-- Key properties -->
+      <div>
+        <h4 style="font-size:.9rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-mid);margin-bottom:.75rem">Soil Properties</h4>
+        <div class="info-row"><span class="label">Soil Type</span><span class="val">${d.soil_type||'—'}</span></div>
+        <div class="info-row"><span class="label">Texture</span><span class="val">${d.texture||'—'}</span></div>
+        <div class="info-row"><span class="label">pH Estimate</span><span class="val">${d.ph_estimate||'—'} (${d.ph_category||'—'})</span></div>
+        <div class="info-row"><span class="label">Moisture</span><span class="val">~${d.moisture_estimate||'—'}%</span></div>
+        <div class="info-row"><span class="label">Organic Matter</span><span class="val">${d.organic_matter||'—'}</span></div>
+        <div class="info-row"><span class="label">Color Analysis</span><span class="val" style="font-size:.85rem;max-width:55%;text-align:right">${d.color_analysis||'—'}</span></div>
+      </div>
+
+      <!-- NPK Bars -->
+      <div>
+        <h4 style="font-size:.9rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-mid);margin-bottom:.75rem">Nutrient Levels (NPK)</h4>
+        ${['nitrogen','phosphorus','potassium'].map((n,i) => {
+          const level = d[n+'_level']||'Medium';
+          const pct   = npkMap[level]||50;
+          const cls   = npkColor[level]||'medium';
+          const labels= ['Nitrogen (N)','Phosphorus (P)','Potassium (K)'];
+          return `<div class="npk-bar-wrap">
+            <span class="npk-label">${labels[i]}</span>
+            <div class="npk-bar"><div class="npk-fill ${cls}" style="width:${pct}%"></div></div>
+            <span style="font-size:.82rem;font-weight:600;width:55px;text-align:right">${level}</span>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <!-- Suitable crops -->
+      <div>
+        <h4 style="font-size:.9rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-mid);margin-bottom:.6rem">✅ Suitable Crops</h4>
+        <div>${cropPills(d.suitable_crops)}</div>
+        ${(d.not_suitable_crops||[]).length ? `
+        <div style="margin-top:.6rem">
+          <span style="font-size:.82rem;color:var(--text-mid);font-weight:600">❌ Not Recommended: </span>
+          ${cropPills(d.not_suitable_crops,true)}
+        </div>` : ''}
+      </div>
+
+      <!-- Season -->
+      ${seasonHtml ? `<div>
+        <h4 style="font-size:.9rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-mid);margin-bottom:.4rem">🗓️ Season-wise Crops</h4>
+        <div class="season-grid">${seasonHtml}</div>
+      </div>` : ''}
+
+      <!-- Fertilizer -->
+      ${(d.fertilizer_recommendations||[]).length ? `<div>
+        <h4 style="font-size:.9rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-mid);margin-bottom:.5rem">🌿 Fertilizer Recommendations</h4>
+        <ul style="margin:0;padding-left:1.2rem;color:var(--text-mid);font-size:.88rem;line-height:1.9">${listItems(d.fertilizer_recommendations)}</ul>
+      </div>` : ''}
+
+      <!-- Soil improvement -->
+      ${(d.soil_improvement||[]).length ? `<div>
+        <h4 style="font-size:.9rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-mid);margin-bottom:.5rem">🔧 Soil Improvement</h4>
+        <ul style="margin:0;padding-left:1.2rem;color:var(--text-mid);font-size:.88rem;line-height:1.9">${listItems(d.soil_improvement)}</ul>
+      </div>` : ''}
+
+      <!-- Irrigation -->
+      ${d.irrigation_advice ? `<div style="padding:.85rem 1rem;background:rgba(37,99,235,.06);border-radius:10px;border:1px solid rgba(37,99,235,.15)">
+        <strong style="color:#1d4ed8">💧 Irrigation Advice</strong>
+        <p style="margin:.35rem 0 0;color:var(--text-mid);font-size:.88rem;line-height:1.6">${d.irrigation_advice}</p>
+      </div>` : ''}
+
+      <!-- Issues & Strengths -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        ${(d.issues||[]).length ? `<div style="padding:.85rem;background:rgba(239,68,68,.05);border-radius:10px;border:1px solid rgba(239,68,68,.15)">
+          <strong style="color:#b91c1c;font-size:.88rem">⚠️ Issues Found</strong>
+          <ul style="margin:.5rem 0 0;padding-left:1.1rem;font-size:.85rem;color:var(--text-mid);line-height:1.8">${listItems(d.issues)}</ul>
+        </div>` : ''}
+        ${(d.strengths||[]).length ? `<div style="padding:.85rem;background:rgba(34,197,94,.05);border-radius:10px;border:1px solid rgba(34,197,94,.15)">
+          <strong style="color:#15803d;font-size:.88rem">✅ Strengths</strong>
+          <ul style="margin:.5rem 0 0;padding-left:1.1rem;font-size:.85rem;color:var(--text-mid);line-height:1.8">${listItems(d.strengths)}</ul>
+        </div>` : ''}
+      </div>
+
+    </div>
+  </div>`;
+
+  const el = document.getElementById('img-result-card');
+  el.innerHTML = html;
+  el.style.display = '';
+}
+
+function showImgError(msg) {
+  const el = document.getElementById('img-error');
+  el.textContent = '❌ ' + msg;
+  el.style.display = '';
+}
+function hideImgError() {
+  document.getElementById('img-error').style.display = 'none';
+}
+</script>
 </body>
 </html>
