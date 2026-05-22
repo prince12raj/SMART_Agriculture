@@ -7,7 +7,8 @@ from routes.soil_routes import soil_bp
 from routes.disease_routes import disease_bp
 from routes.price_routes import price_bp
 from routes.storage_routes import storage_bp
-from utils.translator import get_all_translations   # ← ADD THIS IMPORT
+from routes.registry_routes import registry_bp
+from utils.translator import get_all_translations
 import os
 
 app = Flask(__name__)
@@ -20,6 +21,7 @@ app.register_blueprint(soil_bp, url_prefix='/soil')
 app.register_blueprint(disease_bp, url_prefix='/disease')
 app.register_blueprint(price_bp, url_prefix='/price')
 app.register_blueprint(storage_bp, url_prefix='/storage')
+app.register_blueprint(registry_bp, url_prefix='/registry')
 
 # Ensure upload folder exists
 upload_folder = app.config.get('UPLOAD_FOLDER', 'uploads')
