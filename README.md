@@ -1,8 +1,7 @@
 <div align="center">
 
-<img src="https://readme-typing-svg.demolab.com?font=Georgia&size=38&duration=3000&pause=1000&color=2D6A4F&center=true&vCenter=true&width=700&height=70&lines=🌾+SMART+Agriculture;AI-Powered+Farm+Management" alt="Typing SVG" />
-
-<br/>
+# 🌾 SMART Agriculture
+### AI-Powered Farm Management System
 
 ![Version](https://img.shields.io/badge/version-2.0.0-2D6A4F?style=for-the-badge&logo=git&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)
