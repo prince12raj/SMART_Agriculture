@@ -320,7 +320,7 @@ This project is licensed under the **MIT License** — see [LICENSE](LICENSE) fo
     <td align="center">
       <b>Priyam Mishra</b><br/>
       <sub>Backend & ML Engineer</sub><br/>
-      <a href="https://github.com/prince12raj/SMART_Agriculture">SMART Agriculture</a>
+      <a href="https://github.com/priyam12mishra">@priyam12mishra</a>
     </td>
   </tr>
 </table>
