@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
-import os, anthropic
+import os
 
 chatbot_bp = Blueprint('chatbot', __name__)
 
@@ -41,19 +41,21 @@ def chat():
     if not messages:
         return jsonify({'error': 'No messages provided'}), 400
 
-    api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+    api_key = os.environ.get('OPENAI_API_KEY', '')
     if not api_key:
-        return jsonify({'error': 'API key not configured'}), 500
+        return jsonify({'error': 'OPENAI_API_KEY not configured. Please set it in your Render environment variables.'}), 500
 
     try:
-        client = anthropic.Anthropic(api_key=api_key)
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key)
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
             max_tokens=600,
-            system=SYSTEM_PROMPT,
-            messages=messages
+            messages=[{"role": "system", "content": SYSTEM_PROMPT}] + messages
         )
-        reply = response.content[0].text
+        reply = response.choices[0].message.content
         return jsonify({'reply': reply})
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
