@@ -1,6 +1,6 @@
 """
 Soil Image Analysis Service
-Uses Claude Vision API to analyze soil/land images and return
+Uses OpenAI GPT-4o Vision API to analyze soil/land images and return
 detailed soil quality report with crop recommendations.
 """
 import base64
@@ -8,34 +8,28 @@ import json
 import os
 import re
 
+
 def analyze_soil_image(image_path: str) -> dict:
-    """
-    Analyze a soil image using Claude Vision API.
-    Returns structured soil analysis results.
-    """
-    try:
-        import anthropic
-    except ImportError:
-        return _fallback_analysis()
-
-    api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+    api_key = os.environ.get('OPENAI_API_KEY', '')
     if not api_key:
-        return _fallback_analysis()
+        return {'error': 'OPENAI_API_KEY not configured. Please set it in your Render environment variables.', 'success': False}
 
-    # Read and encode the image
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key)
+    except ImportError:
+        return {'error': 'openai package not installed.', 'success': False}
+
+    # Read and encode image
     try:
         with open(image_path, 'rb') as f:
-            image_data = base64.standard_b64encode(f.read()).decode('utf-8')
+            image_data = base64.b64encode(f.read()).decode('utf-8')
     except Exception as e:
         return {'error': f'Could not read image: {str(e)}'}
 
-    # Detect media type
     ext = os.path.splitext(image_path)[1].lower()
-    media_map = {
-        '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-        '.png': 'image/png', '.webp': 'image/webp',
-        '.gif': 'image/gif'
-    }
+    media_map = {'.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+                 '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif'}
     media_type = media_map.get(ext, 'image/jpeg')
 
     prompt = """You are an expert soil scientist and agronomist. Analyze this soil/land image thoroughly.
@@ -43,7 +37,7 @@ def analyze_soil_image(image_path: str) -> dict:
 Return ONLY a valid JSON object (no markdown, no extra text) with exactly these fields:
 
 {
-  "soil_type": "e.g. Alluvial Soil / Black Cotton Soil / Red Soil / Laterite / Loamy / Sandy / Clay / Mixed",
+  "soil_type": "e.g. Alluvial Soil / Black Cotton Soil / Red Soil / Laterite / Loamy / Sandy / Clay",
   "texture": "e.g. Sandy Loam / Clay Loam / Silty Clay / Sandy / Loamy / Heavy Clay",
   "color_analysis": "description of soil color and what it indicates",
   "ph_estimate": 6.8,
@@ -76,23 +70,20 @@ Return ONLY a valid JSON object (no markdown, no extra text) with exactly these 
   "summary": "2-3 sentence overall assessment of the soil quality and primary recommendations"
 }
 
-Base your analysis on visual cues: color (dark = high organic matter, red = iron-rich, grey = poor drainage), texture, visible structure, moisture, any visible roots or organisms. Be specific and practical for Indian farming context."""
+Base your analysis on visual cues: color, texture, structure, moisture, visible roots. Be specific and practical for Indian farming context."""
 
     try:
-        client = anthropic.Anthropic(api_key=api_key)
-        response = client.messages.create(
-            model="claude-opus-4-5",
+        response = client.chat.completions.create(
+            model="gpt-4o",
             max_tokens=1500,
             messages=[
                 {
                     "role": "user",
                     "content": [
                         {
-                            "type": "image",
-                            "source": {
-                                "type": "base64",
-                                "media_type": media_type,
-                                "data": image_data
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{media_type};base64,{image_data}"
                             }
                         },
                         {
@@ -104,8 +95,7 @@ Base your analysis on visual cues: color (dark = high organic matter, red = iron
             ]
         )
 
-        raw = response.content[0].text.strip()
-        # Strip markdown code fences if present
+        raw = response.choices[0].message.content.strip()
         raw = re.sub(r'^```(?:json)?\s*', '', raw)
         raw = re.sub(r'\s*```$', '', raw)
 
@@ -114,7 +104,6 @@ Base your analysis on visual cues: color (dark = high organic matter, red = iron
         return result
 
     except json.JSONDecodeError:
-        # Try to extract JSON from the response
         try:
             match = re.search(r'\{.*\}', raw, re.DOTALL)
             if match:
@@ -126,11 +115,3 @@ Base your analysis on visual cues: color (dark = high organic matter, red = iron
         return {'error': 'Could not parse AI response', 'raw': raw[:500]}
     except Exception as e:
         return {'error': f'Analysis failed: {str(e)}'}
-
-
-def _fallback_analysis():
-    """Return a message when API key is not configured."""
-    return {
-        'error': 'ANTHROPIC_API_KEY not configured. Please set it in your environment variables on Render.',
-        'success': False
-    }
