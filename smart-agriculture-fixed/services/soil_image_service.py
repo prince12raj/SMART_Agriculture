@@ -1,7 +1,6 @@
 """
 Soil Image Analysis Service
-Uses OpenAI GPT-4o Vision API to analyze soil/land images and return
-detailed soil quality report with crop recommendations.
+Uses Google Gemini Vision API (FREE) to analyze soil images.
 """
 import base64
 import json
@@ -10,29 +9,26 @@ import re
 
 
 def analyze_soil_image(image_path: str) -> dict:
-    api_key = os.environ.get('OPENAI_API_KEY', '')
+    api_key = os.environ.get('GEMINI_API_KEY', '')
     if not api_key:
-        return {'error': 'OPENAI_API_KEY not configured. Please set it in your Render environment variables.', 'success': False}
+        return {
+            'error': 'GEMINI_API_KEY not configured. Set it in Render environment variables.',
+            'success': False
+        }
 
     try:
-        from openai import OpenAI
-        client = OpenAI(api_key=api_key)
+        import google.generativeai as genai
+        from PIL import Image
     except ImportError:
-        return {'error': 'openai package not installed.', 'success': False}
+        return {'error': 'google-generativeai or Pillow not installed.', 'success': False}
 
-    # Read and encode image
     try:
-        with open(image_path, 'rb') as f:
-            image_data = base64.b64encode(f.read()).decode('utf-8')
-    except Exception as e:
-        return {'error': f'Could not read image: {str(e)}'}
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
 
-    ext = os.path.splitext(image_path)[1].lower()
-    media_map = {'.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-                 '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif'}
-    media_type = media_map.get(ext, 'image/jpeg')
+        img = Image.open(image_path)
 
-    prompt = """You are an expert soil scientist and agronomist. Analyze this soil/land image thoroughly.
+        prompt = """You are an expert soil scientist and agronomist. Analyze this soil/land image thoroughly.
 
 Return ONLY a valid JSON object (no markdown, no extra text) with exactly these fields:
 
@@ -52,10 +48,10 @@ Return ONLY a valid JSON object (no markdown, no extra text) with exactly these 
   "suitable_crops": ["Wheat", "Rice", "Maize", "Soybean", "Cotton"],
   "not_suitable_crops": ["Blueberry", "Tea"],
   "fertilizer_recommendations": [
-    "Apply NPK 10-26-26 at 100 kg/acre for phosphorus boost",
-    "Add 2 tonnes/acre of well-composted farmyard manure"
+    "Apply NPK 10-26-26 at 100 kg/acre",
+    "Add 2 tonnes/acre of farmyard manure"
   ],
-  "irrigation_advice": "Drip irrigation recommended due to moderate moisture retention",
+  "irrigation_advice": "Drip irrigation recommended",
   "soil_improvement": [
     "Add organic compost to improve structure",
     "Consider green manuring with legumes"
@@ -67,35 +63,15 @@ Return ONLY a valid JSON object (no markdown, no extra text) with exactly these 
     "Rabi (Nov-Mar)": ["Wheat", "Barley", "Mustard"],
     "Zaid (Mar-Jun)": ["Watermelon", "Cucumber"]
   },
-  "summary": "2-3 sentence overall assessment of the soil quality and primary recommendations"
+  "summary": "2-3 sentence overall assessment and primary recommendations"
 }
 
-Base your analysis on visual cues: color, texture, structure, moisture, visible roots. Be specific and practical for Indian farming context."""
+Base your analysis on visual cues: color, texture, structure, moisture. Be specific and practical for Indian farming."""
 
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            max_tokens=1500,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:{media_type};base64,{image_data}"
-                            }
-                        },
-                        {
-                            "type": "text",
-                            "text": prompt
-                        }
-                    ]
-                }
-            ]
-        )
+        response = model.generate_content([prompt, img])
+        raw = response.text.strip()
 
-        raw = response.choices[0].message.content.strip()
+        # Strip markdown fences
         raw = re.sub(r'^```(?:json)?\s*', '', raw)
         raw = re.sub(r'\s*```$', '', raw)
 
@@ -112,6 +88,6 @@ Base your analysis on visual cues: color, texture, structure, moisture, visible 
                 return result
         except Exception:
             pass
-        return {'error': 'Could not parse AI response', 'raw': raw[:500]}
+        return {'error': 'Could not parse AI response', 'success': False}
     except Exception as e:
-        return {'error': f'Analysis failed: {str(e)}'}
+        return {'error': f'Analysis failed: {str(e)}', 'success': False}
