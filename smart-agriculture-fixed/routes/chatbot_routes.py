@@ -29,7 +29,6 @@ Rules:
 - Keep answers practical, simple, and specific to Indian farming.
 - Use bullet points for lists. Be concise — 3-5 sentences max unless detail is needed.
 - Always be warm and encouraging. Address the farmer respectfully.
-- Never give medical advice unrelated to farming.
 """
 
 @chatbot_bp.route('/chat', methods=['POST'])
@@ -41,20 +40,31 @@ def chat():
     if not messages:
         return jsonify({'error': 'No messages provided'}), 400
 
-    api_key = os.environ.get('OPENAI_API_KEY', '')
+    api_key = os.environ.get('GEMINI_API_KEY', '')
     if not api_key:
-        return jsonify({'error': 'OPENAI_API_KEY not configured. Please set it in your Render environment variables.'}), 500
+        return jsonify({'error': 'GEMINI_API_KEY not configured. Please set it in Render environment variables.'}), 500
 
     try:
-        from openai import OpenAI
-        client = OpenAI(api_key=api_key)
+        import google.generativeai as genai
 
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            max_tokens=600,
-            messages=[{"role": "system", "content": SYSTEM_PROMPT}] + messages
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel(
+            model_name='gemini-1.5-flash',
+            system_instruction=SYSTEM_PROMPT
         )
-        reply = response.choices[0].message.content
+
+        # Convert messages to Gemini format
+        history = []
+        for msg in messages[:-1]:
+            history.append({
+                'role': 'user' if msg['role'] == 'user' else 'model',
+                'parts': [msg['content']]
+            })
+
+        chat = model.start_chat(history=history)
+        response = chat.send_message(messages[-1]['content'])
+        reply = response.text
+
         return jsonify({'reply': reply})
 
     except Exception as e:
