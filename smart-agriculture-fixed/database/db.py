@@ -10,8 +10,13 @@ def init_db(app):
             User, LandRecord, SoilAnalysis, CropDisease,
             PricePrediction, LandRegistry, LandAnalysis
         )
-        db.create_all()
-        _seed_land_registry()
+        try:
+            db.create_all()
+            _seed_land_registry()
+        except Exception as e:
+            # Don't crash the whole app (gunicorn) if the DB is unreachable
+            db.session.rollback()
+            app.logger.error(f"DB init failed: {e}")
 
 def _seed_land_registry():
     """Seed 1000 land registry records if table is empty"""
